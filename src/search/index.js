@@ -8,6 +8,7 @@ import pink from './images/pink.png'
 class Search extends React.Component {
 
     render() {
+        debugger
         return (
           <div className='search-text'>
             Search Text <img src={ pink } alt=""/>

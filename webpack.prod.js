@@ -5,7 +5,46 @@ const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const glob = require('glob')
 
+// 设置多页面打包
+const setMAP = () => {
+  const entry = {}
+  const htmlWebpackPlugins = []
+
+  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'))
+  Object.keys(entryFiles)
+    .map(index => {
+      const entryFile = entryFiles[index]
+      const match = entryFile.match(/src\/(.*)\/index\.js/)
+      const pageName = match && match[1]
+
+      entry[pageName] = entryFile
+      htmlWebpackPlugins.push(
+        new HtmlWebpackPlugin({
+          template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
+          filename: `${pageName}.html`, // 指定打包出来的html文件名
+          chunks: [pageName], // 生成的HTML使用哪些chunk
+          inject: true,  // chunk 自动注入
+          minify: {
+            html5: true,
+            collapseWhitespace: true,
+            preserveLineBreaks: true,
+            minifyCSS: true,
+            minifyJS: true,
+            removeComments: true
+          }
+        }),
+      )
+    })
+  return {
+    entry,
+    htmlWebpackPlugins
+  }
+}
+
+const { entry, htmlWebpackPlugins } = setMAP() 
 module.exports = {
   // 用来指定webpack打包入口
   /**
@@ -16,10 +55,7 @@ module.exports = {
    *           adminApp: 'xxx'   
    *       }
    */
-  entry: {
-    index: './src/index.js',
-    search: './src/search.js'
-  },
+  entry: entry,
   // 用来告诉webpack如何将编译后的文件输出到磁盘
   output: {
     path: path.join(__dirname, 'dist'),
@@ -48,7 +84,27 @@ module.exports = {
           // 'style-loader',
           MiniCssExtractPlugin.loader,
           'css-loader',
-          'less-loader'   // 将less文件转换成css
+          'less-loader',   // 将less文件转换成css
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins: () => [
+                require('autoprefixer')({
+                  // 浏览器最新的两个版本， 使用人数大于1%， ios 7以上的
+                  // overrideBrowserslist: ['last 2 version', '>1%', 'ios 7']
+                })
+              ]
+            }
+          },
+          {
+            loader: 'px2rem-loader',
+            options: {
+              // rem 相对 px的倍数， 即1rem=75px
+              remUnit: 75,
+              // px 转换成 rem后小数点保留位数
+              remPrecision: 8
+            }
+          }
         ]
       }, {
         // test: /.(png|jpg|gif|jpeg)$/,
@@ -95,35 +151,37 @@ module.exports = {
       cssProcessor: require('cssnano')
     }),
     // html压缩 一个页面对应一个HtmlWebpackPlugin
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'src/search.html'),
-      filename: 'search.html', // 指定打包出来的html文件名
-      chunks: ['search'], // 生成的HTML使用哪些chunk
-      inject: true,  // chunk 自动注入
-      minify: {
-        html5: true,
-        collapseWhitespace: true,
-        preserveLineBreaks: true,
-        minifyCSS: true,
-        minifyJS: true,
-        removeComments: true
-      }
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'src/index.html'),
-      filename: 'index.html', // 指定打包出来的html文件名
-      chunks: ['index'], // 生成的HTML使用哪些chunk
-      inject: true,  // chunk 自动注入
-      minify: {
-        html5: true,
-        collapseWhitespace: true,
-        preserveLineBreaks: true,
-        minifyCSS: true,
-        minifyJS: true,
-        removeComments: true
-      }
-    })
-  ],
+    // new HtmlWebpackPlugin({
+    //   template: path.join(__dirname, 'src/search/search.html'),
+    //   filename: 'search.html', // 指定打包出来的html文件名
+    //   chunks: ['search'], // 生成的HTML使用哪些chunk
+    //   inject: true,  // chunk 自动注入
+    //   minify: {
+    //     html5: true,
+    //     collapseWhitespace: true,
+    //     preserveLineBreaks: true,
+    //     minifyCSS: true,
+    //     minifyJS: true,
+    //     removeComments: true
+    //   }
+    // }),
+    // new HtmlWebpackPlugin({
+    //   template: path.join(__dirname, 'src/index/index.html'),
+    //   filename: 'index.html', // 指定打包出来的html文件名
+    //   chunks: ['index'], // 生成的HTML使用哪些chunk
+    //   inject: true,  // chunk 自动注入
+    //   minify: {
+    //     html5: true,
+    //     collapseWhitespace: true,
+    //     preserveLineBreaks: true,
+    //     minifyCSS: true,
+    //     minifyJS: true,
+    //     removeComments: true
+    //   }
+    // }),
+    // 自动清理构建产物
+    new CleanWebpackPlugin()
+  ].concat(htmlWebpackPlugins),
   watch: true, // 监听文件变化，自动构建
   // 只有开启watch, watchOptions才会生效
   watchOptions: {
@@ -137,7 +195,9 @@ module.exports = {
   devServer: {
     contentBase: './dist',
     hot: true
-  }
+  },
+  // 设置source-map
+  devtool: 'eval'
 }
 // 文件指纹
 // Hash: 和整个项目的构建相关，只要项目有修改，整个项目构建的hash值就会更改

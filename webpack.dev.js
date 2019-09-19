@@ -2,6 +2,48 @@
 
 const path = require('path')
 const webpack = require('webpack')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+const glob = require('glob')
+
+// 设置多页面打包
+const setMAP = () => {
+  const entry = {}
+  const htmlWebpackPlugins = []
+
+  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'))
+  Object.keys(entryFiles)
+    .map(index => {
+      const entryFile = entryFiles[index]
+      const match = entryFile.match(/src\/(.*)\/index\.js/)
+      const pageName = match && match[1]
+
+      entry[pageName] = entryFile
+      htmlWebpackPlugins.push(
+        new HtmlWebpackPlugin({
+          template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
+          filename: `${pageName}.html`, // 指定打包出来的html文件名
+          chunks: [pageName], // 生成的HTML使用哪些chunk
+          inject: true,  // chunk 自动注入
+          minify: {
+            html5: true,
+            collapseWhitespace: true,
+            preserveLineBreaks: true,
+            minifyCSS: true,
+            minifyJS: true,
+            removeComments: true
+          }
+        }),
+      )
+    })
+  return {
+    entry,
+    htmlWebpackPlugins
+  }
+}
+
+const { entry, htmlWebpackPlugins } = setMAP() 
 
 module.exports = {
     // 用来指定webpack打包入口
@@ -13,10 +55,7 @@ module.exports = {
      *           adminApp: 'xxx'   
      *       }
      */
-    entry: {
-        index: './src/index.js',
-        search: './src/search.js'
-    },
+    entry: entry,
     // 用来告诉webpack如何将编译后的文件输出到磁盘
     output: {
         path: path.join(__dirname, 'dist'),
@@ -69,8 +108,9 @@ module.exports = {
         // new HtmlWebpackPlugin({
         //     template: './src/index.html'
         // })
-        new webpack.HotModuleReplacementPlugin()
-    ],
+        new webpack.HotModuleReplacementPlugin(),
+        new CleanWebpackPlugin()
+    ].concat(htmlWebpackPlugins),
     watch: true, // 监听文件变化，自动构建
     // 只有开启watch, watchOptions才会生效
     watchOptions: {
@@ -84,7 +124,8 @@ module.exports = {
     devServer: {
       contentBase: './dist',
       hot: true
-    }
+    },
+    devtool: 'source-map'
 }
 // 文件指纹
 // Hash: 和整个项目的构建相关，只要项目有修改，整个项目构建的hash值就会更改
