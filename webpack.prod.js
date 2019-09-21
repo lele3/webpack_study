@@ -64,6 +64,7 @@ module.exports = {
     // 多入口配置方式  filename: '[name].js'  通过占位符确保文件名称的唯一
   },
   // mode 用来指定当前构建环境： production、 development、 还是none， 设置mode可以使用webpack内置函数， 默认值为production
+  // 当 mode 设置为 production 时， 默认开始 tree-shaking
   mode: 'production',
   // loaders   webpack原生只支持JS和JSON两种文件类型，通过Loaders去支持其他文件类型并且把他们转化成有效的模块，并且可以添加到依赖图中
   //           本身是一个函数，接受源文件作为参数，返回转换的结果

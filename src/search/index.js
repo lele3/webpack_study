@@ -4,7 +4,8 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import './search.less'
 import pink from './images/pink.png'
-import "../../common";
+import "../../common"
+import { a } from './tree-shaking'
 class Search extends React.Component {
 
     render() {
