@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const HtmlWebpackExternalsPlugin = require('html-webpack-externals-plugin')
 const glob = require('glob')
 
 // 设置多页面打包
@@ -25,7 +26,7 @@ const setMAP = () => {
         new HtmlWebpackPlugin({
           template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
           filename: `${pageName}.html`, // 指定打包出来的html文件名
-          chunks: [pageName], // 生成的HTML使用哪些chunk
+          chunks: ['vendors', 'commons', pageName], // 生成的HTML使用哪些chunk
           inject: true,  // chunk 自动注入
           minify: {
             html5: true,
@@ -180,8 +181,33 @@ module.exports = {
     //   }
     // }),
     // 自动清理构建产物
-    new CleanWebpackPlugin()
+    new CleanWebpackPlugin(),
+    // 分离基础包，用于cdn引入
+    // new HtmlWebpackExternalsPlugin({
+    //   externals: [{
+    //     module: 'react',
+    //     entry: 'https://cdn.bootcss.com/react/16.9.0-rc.0/cjs/react.development.js',
+    //     global: 'React'
+    //   }, {
+    //     module: 'react-dom',
+    //     entry: 'https://cdn.bootcss.com/react-dom/16.9.0-rc.0/cjs/react-dom-server.browser.development.js',
+    //     global: 'ReactDOM'
+    //   }]
+    // })
   ].concat(htmlWebpackPlugins),
+  // 利用SplitChunksPlugin分离页面公共文件
+  optimization: {
+    splitChunks: {
+      minSize: 0,
+      cacheGroups: {
+        commons: {
+          name: 'commons',
+          chunks: 'all',
+          minChunks: 2
+        }
+      }
+    }
+  },
   watch: true, // 监听文件变化，自动构建
   // 只有开启watch, watchOptions才会生效
   watchOptions: {
