@@ -14,30 +14,31 @@ const setMAP = () => {
   const entry = {}
   const htmlWebpackPlugins = []
 
-  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'))
+  const entryFiles = glob.sync(path.join(__dirname, './src/*/index-server.js'))
   Object.keys(entryFiles)
     .map(index => {
       const entryFile = entryFiles[index]
-      const match = entryFile.match(/src\/(.*)\/index\.js/)
+      const match = entryFile.match(/src\/(.*)\/index-server\.js/)
       const pageName = match && match[1]
-
-      entry[pageName] = entryFile
-      htmlWebpackPlugins.push(
-        new HtmlWebpackPlugin({
-          template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
-          filename: `${pageName}.html`, // 指定打包出来的html文件名
-          chunks: ['vendors', 'commons', pageName], // 生成的HTML使用哪些chunk
-          inject: true,  // chunk 自动注入
-          minify: {
-            html5: true,
-            collapseWhitespace: true,
-            preserveLineBreaks: true,
-            minifyCSS: true,
-            minifyJS: true,
-            removeComments: true
-          }
-        }),
-      )
+      if(pageName) {
+        entry[pageName] = entryFile
+        htmlWebpackPlugins.push(
+          new HtmlWebpackPlugin({
+            template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
+            filename: `${pageName}.html`, // 指定打包出来的html文件名
+            chunks: ['vendors', 'commons', pageName], // 生成的HTML使用哪些chunk
+            inject: true,  // chunk 自动注入
+            minify: {
+              html5: true,
+              collapseWhitespace: true,
+              preserveLineBreaks: true,
+              minifyCSS: true,
+              minifyJS: true,
+              removeComments: false
+            }
+          }),
+        )
+      }
     })
   return {
     entry,
@@ -45,7 +46,7 @@ const setMAP = () => {
   }
 }
 
-const { entry, htmlWebpackPlugins } = setMAP() 
+const { entry, htmlWebpackPlugins } = setMAP()
 module.exports = {
   // 用来指定webpack打包入口
   /**
@@ -60,8 +61,9 @@ module.exports = {
   // 用来告诉webpack如何将编译后的文件输出到磁盘
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: '[name]_[chunkhash:8].js' // 单入口配置方式  配置js文件指纹
+    filename: '[name]-server.js', // 单入口配置方式  配置js文件指纹
     // 多入口配置方式  filename: '[name].js'  通过占位符确保文件名称的唯一
+    libraryTarget: 'umd'
   },
   // mode 用来指定当前构建环境： production、 development、 还是none， 设置mode可以使用webpack内置函数， 默认值为production
   // 当 mode 设置为 production 时， 默认开始 tree-shaking， scope hoisting
@@ -222,7 +224,7 @@ module.exports = {
   },
   devServer: {
     contentBase: './dist',
-    hot: true
+    hot: true,
   },
   // 设置source-map
   devtool: 'eval'

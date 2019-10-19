@@ -11,3 +11,13 @@
   - import 的模块名只能是字符串常量
   - import binding 是 immutable 的
 代码擦除： uglify 阶段删除无用代码
+
+### scope hoisting 
+- 原理
+将所有模块的代码按照引用顺序放在一个函数作用域里，然后适当的重命名一些变量以防止变量名冲突
+- 对比
+通过 scope hoisting 可以减少函数声明代码和内存开销
+
+### 动态import 
+- require.ensure()
+- 需要安装babel插件 @babel/plugin-syntax-dynamic-import
