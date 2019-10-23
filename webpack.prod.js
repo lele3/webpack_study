@@ -7,6 +7,7 @@ const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plug
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const HtmlWebpackExternalsPlugin = require('html-webpack-externals-plugin')
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 const glob = require('glob')
 
 // 设置多页面打包
@@ -72,7 +73,7 @@ module.exports = {
     rules: [
       { // test 指定匹配规则   use 指定使用的loader名称
         test: /.js$/,
-        use: ['babel-loader', 'eslint-loader']
+        use: ['babel-loader' /*, 'eslint-loader' */]
       }, {
         test: /.css$/,
         use: [
@@ -195,7 +196,16 @@ module.exports = {
     //     global: 'ReactDOM'
     //   }]
     // })
-    new webpack.optimize.ModuleConcatenationPlugin()
+    new webpack.optimize.ModuleConcatenationPlugin(),
+    new FriendlyErrorsWebpackPlugin(),
+    function () {
+      this.hooks.done.tap('done', (stats) => {
+        if(stats.compilation.errors && stats.compilation.errors.length && process.argv.indexOf('--watch') == -1) {
+          console.log('build error')
+          process.exit(1)
+        }
+      })
+    }
   ].concat(htmlWebpackPlugins),
   // 利用SplitChunksPlugin分离页面公共文件
   optimization: {
@@ -225,7 +235,9 @@ module.exports = {
     hot: true
   },
   // 设置source-map
-  devtool: 'eval'
+  devtool: 'eval',
+  // 设置统计信息， errors-only 只有在出错情况下才会打印日志
+  stats: 'errors-only'
 }
 // 文件指纹
 // Hash: 和整个项目的构建相关，只要项目有修改，整个项目构建的hash值就会更改

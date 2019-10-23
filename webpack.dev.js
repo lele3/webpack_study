@@ -4,6 +4,7 @@ const path = require('path')
 const webpack = require('webpack')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 
 const glob = require('glob')
 
@@ -109,7 +110,8 @@ module.exports = {
         //     template: './src/index.html'
         // })
         new webpack.HotModuleReplacementPlugin(),
-        new CleanWebpackPlugin()
+        new CleanWebpackPlugin(), 
+        new FriendlyErrorsWebpackPlugin()
     ].concat(htmlWebpackPlugins),
     watch: true, // 监听文件变化，自动构建
     // 只有开启watch, watchOptions才会生效
@@ -123,7 +125,8 @@ module.exports = {
     },
     devServer: {
       contentBase: './dist',
-      hot: true
+      hot: true,
+      stats: 'errors-only'
     },
     devtool: 'source-map'
 }
