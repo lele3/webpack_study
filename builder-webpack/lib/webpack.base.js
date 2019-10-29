@@ -8,12 +8,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
+const projectRoot = process.cwd()
+
 // 设置多页面打包
 const setMAP = () => {
   const entry = {};
   const htmlWebpackPlugins = [];
 
-  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'));
+  const entryFiles = glob.sync(path.join(projectRoot, './src/*/index.js'));
   Object.keys(entryFiles)
     .map((index) => {
       const entryFile = entryFiles[index];
@@ -23,7 +25,7 @@ const setMAP = () => {
       entry[pageName] = entryFile;
       return htmlWebpackPlugins.push(
         new HtmlWebpackPlugin({
-          template: path.join(__dirname, `src/${pageName}/${pageName}.html`),
+          template: path.join(projectRoot, `src/${pageName}/${pageName}.html`),
           filename: `${pageName}.html`, // 指定打包出来的html文件名
           chunks: ['vendors', 'commons', pageName], // 生成的HTML使用哪些chunk
           inject: true, // chunk 自动注入
@@ -123,5 +125,5 @@ module.exports = {
       });
     },
   ].concat(htmlWebpackPlugins),
-  stats: 'error-only',
+  stats: 'errors-only',
 };
